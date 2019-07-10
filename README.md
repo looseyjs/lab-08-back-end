@@ -4,7 +4,7 @@ Code Fellows Seattle 301d57 lab 6 back-end
 
 # Project Name
 
-**Author**: Marisha Hoza and .
+**Author**: Marisha Hoza and Jane Hur.
 **Version**: 1.0.1 
 <!-- (increment the patch/fix version number if you make more commits past your first submission) -->
 
@@ -68,3 +68,23 @@ Start time: __9:50__
 Finish time: __10:25__
 
 Actual time needed to complete: __35min__
+
+#### Number and name of feature: __Weather__
+
+Estimate of time needed to complete: __1hr__
+
+Start time: __10:25__
+
+Finish time: __10:45__
+
+Actual time needed to complete: __20min__
+
+#### Number and name of feature: __EventBrite__
+
+Estimate of time needed to complete: __1hr__
+
+Start time: __11:00__
+
+Finish time: __12:00__
+
+Actual time needed to complete: __1hr__
