@@ -11,16 +11,24 @@ const PORT = process.env.PORT || 3001;
 // Make our server middleware
 const app = express();
 app.use(cors());
+const superagent = require('superagent');
 
 // =============================================================
 // Functions and Object constructors
 
 // searches DB for location information returns a new object
-function searchToLatLng(locationName) {
-  const geoData = require('./data/geo.json');
-  const location = new Location(locationName, geoData.results[0].formatted_address, geoData.results[0].geometry.location.lat, geoData.results[0].geometry.location.lng);
-
-  return location;
+function searchToLatLng(req, res) {
+  //const geoData = require('./data/geo.json');
+  const locationName = req.query.data;
+  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${locationName}&key=${process.env.GEOCODE_API_KEY}`;
+  superagent.get(url)
+    .then (result =>{
+      let location = new Location(locationName, result.body.results[0].formatted_address, result.body.results[0].geometry.location.lat, result.body.results[0].geometry.location.lng);
+      res.send(location);
+    })
+    .catch(e => {
+      responseError(e);
+    })
 }
 
 // Location Object constructor
@@ -40,11 +48,6 @@ function searchWeather() {
     return new Weather(day.time, day.summary)
   });
 
-  // construct object using data
-  // for (let i = 0; i < 8; i++) {
-  //   time.push(new Weather(weatherData.daily.data[i].time, weatherData.daily.data[i].summary));
-  // }
-
   return time;
 }
 
@@ -61,14 +64,7 @@ function responseError() {
 }
 
 // Set up route to location page
-app.get('/location', (req, res) => {
-  try {
-    const LocationData = searchToLatLng(req.query.data);
-    res.send(LocationData);
-  } catch (e) {
-    res.send(responseError());
-  }
-});
+app.get('/location', searchToLatLng);
 
 // Set up route to weather page
 app.get('/weather', (req, res) => {
