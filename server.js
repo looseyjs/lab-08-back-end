@@ -65,6 +65,37 @@ function Weather(time, forecast) {
   this.time = new Date(time * 1000).toDateString();
 }
 
+
+// searches for Events
+function searchEvents(req, res) {
+  // url
+
+  // this is very filtered, sometimes no events apply
+  const url = `https://www.eventbriteapi.com/v3/events/search/?sort_by=best&location.within=10mi&location.latitude=${Location.currentLocation.latitude}&location.longitude=${Location.currentLocation.longitude}&categories=109%2C119&price=free&start_date.keyword=this_week&token=${process.env.EVENTBRITE_API_KEY}`
+
+  superagent.get(url)
+    .then (result => {
+
+      let temp = result.body.events.map(event => {
+        return new Event(event.url, event.name.text, event.start.local, event.summary);
+      });
+
+      res.send(temp);
+    })
+    .catch(e => {
+      responseError(e);
+    })
+}
+
+function Event(link, name, event_date, summary){
+  this.link = link;
+  this.name = name;
+  this.event_date = new Date(event_date).toDateString();
+  this.summary = summary;
+}
+
+
+
 // response error code
 function responseError() {
   let error = { status: 500, responseText: 'Sorry, something went wrong.' };
@@ -76,6 +107,9 @@ app.get('/location', searchToLatLng);
 
 // Set up route to weather page
 app.get('/weather', searchWeather);
+
+// Set up route to weather page
+app.get('/events', searchEvents);
 
 // Default selector and notifier
 app.use('*', (req, res) => {
