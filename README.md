@@ -4,8 +4,9 @@ Code Fellows Seattle 301d57 lab 6 back-end
 
 # Project Name
 
-**Author**: Marish "The Beast" Hoza and Travis "Mad Man" Cox.
-**Version**: 1.0.0 (increment the patch/fix version number if you make more commits past your first submission)
+**Author**: Marisha Hoza and .
+**Version**: 1.0.0 
+<!-- (increment the patch/fix version number if you make more commits past your first submission) -->
 
 ## Overview
 
@@ -40,46 +41,30 @@ This application is built with JavaScript, Node.js, Express, Heroku,
 ## Credits and Collaborations
 
 <!-- Give credit (and a link) to other people or resources that helped you build this application. -->
-
 I would like to thank the academy...
 
+Travis Cox
+Melfi Perez
+
+
 ## Features
-#### Number and name of feature: __Repository Set-Up__
+
+#### Number and name of feature: __Data Formatting__
 
 Estimate of time needed to complete: __1hr__
 
-Start time: __9:00__
+Start time: __9:40am__
 
-Finish time: __10:16__
+Finish time: _____
 
-Actual time needed to complete: __1:15__
+Actual time needed to complete: _____
 
-#### Number and name of feature: __Locations__
+#### Number and name of feature: __ __
 
-Estimate of time needed to complete: __1hr__
+Estimate of time needed to complete: __ __
 
-Start time: __10:16__
+Start time: __ __
 
-Finish time: __11:20__
+Finish time: _____
 
-Actual time needed to complete: __1:04__
-
-#### Number and name of feature: __Weather__
-
-Estimate of time needed to complete: __1hr__
-
-Start time: __11:25__
-
-Finish time: __12:06__
-
-Actual time needed to complete: __0:41__
-
-#### Number and name of feature: __Errors__
-
-Estimate of time needed to complete: __0:30__
-
-Start time: __12:06__
-
-Finish time: __12:20__
-
-Actual time needed to complete: __0:15__
+Actual time needed to complete: _____

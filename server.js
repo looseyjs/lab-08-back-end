@@ -36,12 +36,14 @@ function Location(locationName, query, lat, lng) {
 function searchWeather() {
   // database of information
   const weatherData = require('./data/darksky.json');
-  let time = [];
+  let time = weatherData.daily.data.map(day => {
+    return new Weather(day.time, day.summary)
+  });
 
   // construct object using data
-  for (let i = 0; i < 8; i++) {
-    time.push(new Weather(weatherData.daily.data[i].time, weatherData.daily.data[i].summary));
-  }
+  // for (let i = 0; i < 8; i++) {
+  //   time.push(new Weather(weatherData.daily.data[i].time, weatherData.daily.data[i].summary));
+  // }
 
   return time;
 }
