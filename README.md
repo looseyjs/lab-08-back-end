@@ -55,9 +55,9 @@ Estimate of time needed to complete: __1hr__
 
 Start time: __9:40am__
 
-Finish time: _____
+Finish time: __9:50__
 
-Actual time needed to complete: _____
+Actual time needed to complete: __10min__
 
 #### Number and name of feature: __ __
 
