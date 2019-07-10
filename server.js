@@ -23,8 +23,8 @@ function searchToLatLng(req, res) {
   const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${locationName}&key=${process.env.GEOCODE_API_KEY}`;
   superagent.get(url)
     .then (result =>{
-      let location = new Location(locationName, result.body.results[0].formatted_address, result.body.results[0].geometry.location.lat, result.body.results[0].geometry.location.lng);
-      res.send(location);
+      Location.currentLocation = new Location(locationName, result.body.results[0].formatted_address, result.body.results[0].geometry.location.lat, result.body.results[0].geometry.location.lng);
+      res.send(Location.currentLocation);
     })
     .catch(e => {
       responseError(e);
@@ -39,16 +39,24 @@ function Location(locationName, query, lat, lng) {
   this.longitude = lng;
 }
 
+
+
 // searches DB for weather information returns a new object
 // pass in data to use for look up
-function searchWeather() {
+function searchWeather(req, res) {
   // database of information
-  const weatherData = require('./data/darksky.json');
-  let time = weatherData.daily.data.map(day => {
-    return new Weather(day.time, day.summary)
-  });
-
-  return time;
+  const url = `https://api.darksky.net/forecast/${process.env.WEATHER_API_KEY}/${Location.currentLocation.latitude},${Location.currentLocation.longitude}`;
+  //const weatherData = require('./data/darksky.json');
+  superagent.get(url)
+    .then (result =>{
+      let time = result.body.daily.data.map(day => {
+        return new Weather(day.time, day.summary)
+      });
+      res.send(time);
+    })
+    .catch(e => {
+      responseError(e);
+    })
 }
 
 // Weather Object constructor
@@ -67,14 +75,7 @@ function responseError() {
 app.get('/location', searchToLatLng);
 
 // Set up route to weather page
-app.get('/weather', (req, res) => {
-  try {
-    const weatherData = searchWeather(req.query.data);
-    res.send(weatherData);
-  } catch (e) {
-    res.send(responseError());
-  }
-});
+app.get('/weather', searchWeather);
 
 // Default selector and notifier
 app.use('*', (req, res) => {

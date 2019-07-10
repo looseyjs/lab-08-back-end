@@ -5,7 +5,7 @@ Code Fellows Seattle 301d57 lab 6 back-end
 # Project Name
 
 **Author**: Marisha Hoza and .
-**Version**: 1.0.0 
+**Version**: 1.0.1 
 <!-- (increment the patch/fix version number if you make more commits past your first submission) -->
 
 ## Overview
@@ -59,12 +59,12 @@ Finish time: __9:50__
 
 Actual time needed to complete: __10min__
 
-#### Number and name of feature: __ __
+#### Number and name of feature: __Locations__
 
-Estimate of time needed to complete: __ __
+Estimate of time needed to complete: __1hr__
 
-Start time: __ __
+Start time: __9:50__
 
-Finish time: _____
+Finish time: __10:25__
 
-Actual time needed to complete: _____
+Actual time needed to complete: __35min__
