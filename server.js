@@ -21,6 +21,20 @@ client.on('error',
 const app = express();
 app.use(cors());
 
+// Set up route to location page
+app.get('/location', searchToLatLng);
+
+// Set up route to weather page
+app.get('/weather', searchWeather);
+
+// Set up route to weather page
+app.get('/events', searchEvents);
+
+// Default selector and notifier
+app.use('*', (req, res) => {
+  res.status(500).send('Sorry, something went wrong.');
+});
+
 // =============================================================
 // Functions and Object constructors
 
@@ -60,30 +74,36 @@ function dbQuery(queryType, locationName, response, handleTrue, handleFalse) {
       });
   } else {
     console.log(`checking ${queryType}`);
-    client.query(
-      `SELECT * FROM $1 
-      WHERE location_id = $2`, [queryType, getId(locationName)])
-      .then(sqlResult => {
-        console.log(sqlResult);
-        if(sqlResult.rowCount === 0) {
-        //this was passed infoExists in the func searchToLatLng: handleTrue === infoExists
-          console.log('getting new data from googles');
-          handleFalse(locationName, response);
-        } else {
-        //this was passed noInfo in the func searchToLatLng: handleFalse === noInfo
-          console.log('sending from db');
-          handleTrue(sqlResult, response);
-        }
-      })
-      .catch(e => {
-        responseError(e);
-      });
+    console.log('some id thing', getId(locationName));
+    getId(locationName).then(locationId => {
+      console.log('locationid', locationId);
+      client.query(
+        `SELECT * FROM ${queryType} 
+      WHERE location_id = $1`, [locationId.id])
+        .then(sqlResult => {
+          console.log('sqlresult', sqlResult);
+          if (sqlResult.rowCount === 0) {
+            //this was passed infoExists in the func searchToLatLng: handleTrue === infoExists
+            console.log('getting new data from googles');
+            handleFalse(locationName, response);
+          } else {
+            //this was passed noInfo in the func searchToLatLng: handleFalse === noInfo
+            console.log('sending from db');
+            handleTrue(sqlResult, response);
+          }
+        })
+        .catch(e => {
+          console.error(e);
+          responseError(e);
+        });
+    })
+
   }
 }
 
 function getId (locationName){
   console.log('getting id');
-  client.query(
+  return client.query(
     `SELECT id FROM locations
     WHERE search_query = $1`,
     [locationName.query.data.search_query]
@@ -210,19 +230,7 @@ function responseError() {
   return error;
 }
 
-// Set up route to location page
-app.get('/location', searchToLatLng);
 
-// Set up route to weather page
-app.get('/weather', searchWeather);
-
-// Set up route to weather page
-app.get('/events', searchEvents);
-
-// Default selector and notifier
-app.use('*', (req, res) => {
-  res.status(500).send('Sorry, something went wrong.');
-});
 
 // start the server
 app.listen(PORT, () => {
