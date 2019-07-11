@@ -4,8 +4,8 @@ Code Fellows Seattle 301d57 lab 6 back-end
 
 # Project Name
 
-**Author**: Marisha Hoza and Jane Hur.
-**Version**: 1.0.1 
+**Author**: Marisha Hoza and Bomibear.
+**Version**: 1.0.10
 <!-- (increment the patch/fix version number if you make more commits past your first submission) -->
 
 ## Overview
@@ -34,9 +34,7 @@ This application is built with JavaScript, Node.js, Express, Heroku,
 
 -->
 
-07-09-2019 10:12am - Application repo setup on GitHub, cloned to local repositories, Readme.md made, add .env file, npm init, imported JSON files (daresky, geo), linter installed, .ignore installed.
 
-07-09-2019 10:16am - Repository setup complete.
 
 ## Credits and Collaborations
 
@@ -45,46 +43,19 @@ I would like to thank the academy...
 
 Travis Cox
 Melfi Perez
+Roman Gebrehiwot
+Manish KC
+Jane Hur
 
 
 ## Features
 
-#### Number and name of feature: __Data Formatting__
+#### Number and name of feature: __Database__
 
 Estimate of time needed to complete: __1hr__
 
-Start time: __9:40am__
+Start time: __9:30am__
 
-Finish time: __9:50__
+Finish time: _____
 
-Actual time needed to complete: __10min__
-
-#### Number and name of feature: __Locations__
-
-Estimate of time needed to complete: __1hr__
-
-Start time: __9:50__
-
-Finish time: __10:25__
-
-Actual time needed to complete: __35min__
-
-#### Number and name of feature: __Weather__
-
-Estimate of time needed to complete: __1hr__
-
-Start time: __10:25__
-
-Finish time: __10:45__
-
-Actual time needed to complete: __20min__
-
-#### Number and name of feature: __EventBrite__
-
-Estimate of time needed to complete: __1hr__
-
-Start time: __11:00__
-
-Finish time: __12:00__
-
-Actual time needed to complete: __1hr__
+Actual time needed to complete: _____
