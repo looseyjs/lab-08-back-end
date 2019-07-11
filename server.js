@@ -39,33 +39,40 @@ function dbQuery(queryType, locationName, response, handleTrue, handleFalse) {
   // TODO: locationname might not be what we expect
 
   if(queryType === 'locations') {
+    console.log('checking location');
     client.query(
       `SELECT * FROM locations 
       WHERE search_query = $1`,
       [locationName])
       .then(sqlResult => {
-        if(sqlResult.rowCount) {
+        if(sqlResult.rowCount === 0) {
           //this was passed infoExists in the func searchToLatLng: handleTrue === infoExists
-          handleTrue(sqlResult, response);
+          console.log('getting new location data from googles');
+          handleFalse(locationName, response);
         } else {
           //this was passed noInfo in the func searchToLatLng: handleFalse === noInfo
-          handleFalse(locationName, response);
+          console.log('sending location from db');
+          handleTrue(sqlResult, response);
         }
       })
       .catch(e => {
         responseError(e);
       });
   } else {
+    console.log(`checking ${queryType}`);
     client.query(
       `SELECT * FROM $1 
       WHERE location_id = $2`, [queryType, getId(locationName)])
       .then(sqlResult => {
-        if(sqlResult.rowCount) {
+        console.log(sqlResult);
+        if(sqlResult.rowCount === 0) {
         //this was passed infoExists in the func searchToLatLng: handleTrue === infoExists
-          handleTrue(sqlResult, response);
+          console.log('getting new data from googles');
+          handleFalse(locationName, response);
         } else {
         //this was passed noInfo in the func searchToLatLng: handleFalse === noInfo
-          handleFalse(locationName, response);
+          console.log('sending from db');
+          handleTrue(sqlResult, response);
         }
       })
       .catch(e => {
@@ -75,12 +82,14 @@ function dbQuery(queryType, locationName, response, handleTrue, handleFalse) {
 }
 
 function getId (locationName){
+  console.log('getting id');
   client.query(
     `SELECT id FROM locations
     WHERE search_query = $1`,
-    [locationName]
+    [locationName.query.data.search_query]
   )
     .then(sqlResult => {
+      console.log(sqlResult.rows[0]);
       return(sqlResult.rows[0])
     })
     .catch(e => {
