@@ -27,28 +27,59 @@ app.use(cors());
 // searches DB for location information returns a new object
 function searchToLatLng(req, res) {
   const locationName = req.query.data;
+  const response = res;
   //start db query to see if location exists
-  dbQuery(locationName, res, infoExists, noLocation);
+  dbQuery('locations', locationName, response, infoExists, noLocation);
 }
 
 //handles db queries to see info request exists
-function dbQuery(locationName, res, handleTrue, handleFalse) {
+function dbQuery(queryType, locationName, response, handleTrue, handleFalse) {
+
   //TODO: refactor to handle other reqs from weather, events, etc
-  client.query(`SELECT * FROM locations WHERE search_query=$1`, [locationName])
-    .then(sqlResult => {
-      if(sqlResult.rowCount) {
+  // TODO: locationname might not be what we expect
+
+  if(queryType === 'locations') {
+    client.query(
+      `SELECT * FROM locations 
+      WHERE search_query = $1`,
+      [locationName])
+      .then(sqlResult => {
+        if(sqlResult.rowCount) {
+          //this was passed infoExists in the func searchToLatLng: handleTrue === infoExists
+          handleTrue(sqlResult, response);
+        } else {
+          //this was passed noInfo in the func searchToLatLng: handleFalse === noInfo
+          handleFalse(locationName, response);
+        }
+      })
+  } else {
+    console.log('got to line 52');
+    client.query(
+      `SELECT * FROM $1 
+      WHERE location_id = $2`, [queryType, getId(locationName)])
+      .then(sqlResult => {
+        if(sqlResult.rowCount) {
         //this was passed infoExists in the func searchToLatLng: handleTrue === infoExists
-        handleTrue(res, sqlResult);
-      } else {
+          handleTrue(sqlResult, response);
+        } else {
         //this was passed noInfo in the func searchToLatLng: handleFalse === noInfo
-        handleFalse(locationName, res);
-      }
-    })
+          handleFalse(locationName, response);
+        }
+      })
+  }
+}
+
+function getId (locationName){
+  return client.query(
+    `SELECT id FROM locations
+    WHERE search_query = $1`,
+    [locationName]
+  )
 }
 
 //send back all sql info for that row
 //psql command is: SELECT * FROM locations WHERE search_query='INSERTLOCATIONNAME'
-function infoExists(res, sqlResult) {
+function infoExists(sqlResult, res) {
   res.send(sqlResult.rows[0]);
 }
 
@@ -89,16 +120,28 @@ function Location(locationName, query, lat, lng) {
 // pass in data to use for look up
 function searchWeather(req, res) {
   // database of information
-  const lat = req.query.data.latitude;
-  const long = req.query.data.longitude;
+  dbQuery('weathers', req, res, infoExists, noWeather);
+}
+
+function noWeather(locationName, res) {
+  const lat = locationName.latitude;
+  const long = locationName.longitude;
   const url = `https://api.darksky.net/forecast/${process.env.WEATHER_API_KEY}/${lat},${long}`;
-  //const weatherData = require('./data/darksky.json');
   superagent.get(url)
     .then (result =>{
-      let time = result.body.daily.data.map(day => {
-        return new Weather(day.time, day.summary)
+      let dailyForecast = result.body.daily.data.map(day => {
+        return new Weather(day.dailyForecast, day.summary)
       });
-      res.send(time);
+      res.send(dailyForecast);
+      client.query(
+        `INSERT INTO weathers (
+          forecast,
+          time,
+          location_id
+        ) 
+        VALUES ($1, $2, $3)`,
+        [dailyForecast.forecast, dailyForecast.time, getId(locationName)]
+      )
     })
     .catch(e => {
       responseError(e);
@@ -106,9 +149,9 @@ function searchWeather(req, res) {
 }
 
 // Weather Object constructor
-function Weather(time, forecast) {
+function Weather(dailyForecast, forecast) {
   this.forecast = forecast;
-  this.time = new Date(time * 1000).toDateString();
+  this.time = new Date(dailyForecast * 1000).toDateString();
 }
 
 
@@ -140,8 +183,6 @@ function Event(link, name, event_date, summary){
   this.event_date = new Date(event_date).toDateString();
   this.summary = summary;
 }
-
-
 
 // response error code
 function responseError() {
