@@ -52,8 +52,10 @@ function dbQuery(queryType, locationName, response, handleTrue, handleFalse) {
           handleFalse(locationName, response);
         }
       })
+      .catch(e => {
+        responseError(e);
+      });
   } else {
-    console.log('got to line 52');
     client.query(
       `SELECT * FROM $1 
       WHERE location_id = $2`, [queryType, getId(locationName)])
@@ -66,15 +68,24 @@ function dbQuery(queryType, locationName, response, handleTrue, handleFalse) {
           handleFalse(locationName, response);
         }
       })
+      .catch(e => {
+        responseError(e);
+      });
   }
 }
 
 function getId (locationName){
-  return client.query(
+  client.query(
     `SELECT id FROM locations
     WHERE search_query = $1`,
     [locationName]
   )
+    .then(sqlResult => {
+      return(sqlResult.rows[0])
+    })
+    .catch(e => {
+      responseError(e);
+    });
 }
 
 //send back all sql info for that row
