@@ -35,102 +35,68 @@ app.use('*', (req, res) => {
   res.status(500).send('Sorry, something went wrong.');
 });
 
+
+// start the server
+app.listen(PORT, () => {
+  console.log(`app is up on port ${PORT}`);
+});
+
+
 // =============================================================
 // Functions and Object constructors
 
 // searches DB for location information returns a new object
-function searchToLatLng(req, res) {
-  const locationName = req.query.data;
-  const response = res;
+function searchToLatLng(request, response) {
+  const locationName = request.query.data;
+  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${locationName}&key=${process.env.GEOCODE_API_KEY}`;
+
   //start db query to see if location exists
-  dbQuery('locations', locationName, response, infoExists, noLocation);
-}
-
-//handles db queries to see info request exists
-function dbQuery(queryType, locationName, response, handleTrue, handleFalse) {
-
-  //TODO: refactor to handle other reqs from weather, events, etc
-  // TODO: locationname might not be what we expect
-
-  if(queryType === 'locations') {
-    console.log('checking location');
-    client.query(
-      `SELECT * FROM locations 
-      WHERE search_query = $1`,
-      [locationName])
-      .then(sqlResult => {
-        if(sqlResult.rowCount === 0) {
-          //this was passed infoExists in the func searchToLatLng: handleTrue === infoExists
-          console.log('getting new location data from googles');
-          handleFalse(locationName, response);
-        } else {
-          //this was passed noInfo in the func searchToLatLng: handleFalse === noInfo
-          console.log('sending location from db');
-          handleTrue(sqlResult, response);
-        }
-      })
-      .catch(e => {
-        responseError(e);
-      });
-  } else {
-    console.log(`checking ${queryType}`);
-    console.log('some id thing', getId(locationName));
-    getId(locationName).then(locationId => {
-      console.log('locationid', locationId);
-      client.query(
-        `SELECT * FROM ${queryType} 
-      WHERE location_id = $1`, [locationId.id])
-        .then(sqlResult => {
-          console.log('sqlresult', sqlResult);
-          if (sqlResult.rowCount === 0) {
-            //this was passed infoExists in the func searchToLatLng: handleTrue === infoExists
-            console.log('getting new data from googles');
-            handleFalse(locationName, response);
-          } else {
-            //this was passed noInfo in the func searchToLatLng: handleFalse === noInfo
-            console.log('sending from db');
-            handleTrue(sqlResult, response);
-          }
-        })
-        .catch(e => {
-          console.error(e);
-          responseError(e);
-        });
-    })
-
-  }
-}
-
-function getId (locationName){
-  console.log('getting id');
-  return client.query(
-    `SELECT id FROM locations
-    WHERE search_query = $1`,
-    [locationName.query.data.search_query]
-  )
-    .then(sqlResult => {
-      console.log(sqlResult.rows[0]);
-      return(sqlResult.rows[0])
+  dbQuery('search_query', locationName, 'locations', url, noLocation)
+    .then(locationData => {
+      response.send(locationData);
     })
     .catch(e => {
       responseError(e);
     });
 }
 
+//handles db queries to see info request exists
+function dbQuery(searchKey, searchFor, queryType, url, noInfo) {
+
+  //TODO: refactor to handle other reqs from weather, events, etc
+  // TODO: locationname might not be what we expect
+  return client.query(
+    `SELECT * FROM ${queryType}
+    WHERE ${searchKey} = $1`,
+    [searchFor]
+  ).then(sqlResult => {
+    if (sqlResult.rowCount === 0){
+      // not in database
+      return noInfo(url, searchFor);
+    } else {
+      // in database
+      return infoExists(sqlResult);
+    }
+  });
+}
+
 //send back all sql info for that row
 //psql command is: SELECT * FROM locations WHERE search_query='INSERTLOCATIONNAME'
-function infoExists(sqlResult, res) {
-  res.send(sqlResult.rows[0]);
+function infoExists(sqlResult) {
+  if (sqlResult.rows.length === 1){
+    return sqlResult.rows[0];
+  } else {
+    return sqlResult.rows;
+  }
 }
 
 //TODO add similar functions for events, yelp, etc
-function noLocation(locationName, res) {
-  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${locationName}&key=${process.env.GEOCODE_API_KEY}`;
+function noLocation(url, locationName) {
 
-  superagent.get(url)
+  return superagent.get(url)
     .then (result =>{
-      let location = new Location(locationName, result.body.results[0].formatted_address, result.body.results[0].geometry.location.lat, result.body.results[0].geometry.location.lng);
-      res.send(location);
+      let location = new UserLocation(locationName, result.body.results[0].formatted_address, result.body.results[0].geometry.location.lat, result.body.results[0].geometry.location.lng);
+
       client.query(
         `
         INSERT INTO locations (
@@ -139,17 +105,18 @@ function noLocation(locationName, res) {
           latitude,
           longitude
         )
-        VALUES ($1, $2, $3, $4)`,
+        VALUES ($1, $2, $3, $4)
+        RETURNING *`,
         [location.search_query, location.formatted_query, location.latitude, location.longitude]
       )
     })
-    .catch(e => {
-      responseError(e);
-    });
+    .then(sqlResult => {
+      return sqlResult.rows[0];
+    })
 }
 
 // Location Object constructor
-function Location(locationName, query, lat, lng) {
+function UserLocation(locationName, query, lat, lng) {
   this.search_query = locationName;
   this.formatted_query = query;
   this.latitude = lat;
@@ -158,40 +125,48 @@ function Location(locationName, query, lat, lng) {
 
 // searches DB for weather information returns a new object
 // pass in data to use for look up
-function searchWeather(req, res) {
-  // database of information
-  dbQuery('weathers', req, res, infoExists, noWeather);
-}
-
-function noWeather(locationName, res) {
-  const lat = locationName.latitude;
-  const long = locationName.longitude;
+function searchWeather(request, response) {
+  const lat = request.query.data.latitude;
+  const long = request.query.data.longitude;
   const url = `https://api.darksky.net/forecast/${process.env.WEATHER_API_KEY}/${lat},${long}`;
-  superagent.get(url)
-    .then (result =>{
-      let dailyForecast = result.body.daily.data.map(day => {
-        return new Weather(day.dailyForecast, day.summary)
-      });
-      res.send(dailyForecast);
-      client.query(
-        `INSERT INTO weathers (
-          forecast,
-          time,
-          location_id
-        ) 
-        VALUES ($1, $2, $3)`,
-        [dailyForecast.forecast, dailyForecast.time, getId(locationName)]
-      )
+
+  const locationID = request.query.data.id;
+  // database of information
+  dbQuery('location_id', locationID, 'weathers', url, noWeather)
+    .then(weatherData => {
+      response.send(weatherData);
     })
     .catch(e => {
       responseError(e);
-    })
+    });
+}
+
+function noWeather(url, searchFor) {
+
+  return superagent.get(url)
+    .then (result =>{
+      let dailyForecast = result.body.daily.data.map(day => {
+        let daysWeather = new Weather(day);
+
+        client.query(
+          `INSERT INTO weathers (
+            forecast,
+            time,
+            location_id) 
+            VALUES ($1, $2, $3)`,
+          [daysWeather.forecast, daysWeather.time, searchFor]
+        );
+
+        return daysWeather;
+      });
+      return dailyForecast;
+    });
 }
 
 // Weather Object constructor
-function Weather(dailyForecast, forecast) {
-  this.forecast = forecast;
-  this.time = new Date(dailyForecast * 1000).toDateString();
+function Weather(day) {
+  this.forecast = day.summary;
+  this.time = new Date(day.time * 1000).toDateString();
 }
 
 
@@ -227,12 +202,7 @@ function Event(link, name, event_date, summary){
 // response error code
 function responseError() {
   let error = { status: 500, responseText: 'Sorry, something went wrong.' };
+  console.error(error);
   return error;
 }
 
-
-
-// start the server
-app.listen(PORT, () => {
-  console.log(`app is up on port ${PORT}`);
-});
